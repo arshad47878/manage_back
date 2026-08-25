@@ -1,7 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken'
+
 
 const PORT = 8000;
+const JWT_SECRET = "Arshad"
 
 const data = [
   { id: 1, name: 'Arshad Qureshi', phone: '123-456-7890', fatherName: 'Qureshi',  
@@ -22,7 +25,8 @@ app.get('/', (req, res) => {
 app.post('/api/v1/students', (req, res) => {
   
   const newStudent = {
-    id: data.length + 1,
+    // id: data.length + 1,
+    id : Math.max(...data.map(student => student.id)) + 1,
     ...req.body,
   };
 
@@ -90,6 +94,9 @@ app.post('/signup', (req, res) => {
     // what is salt (10)? 
     // Salt is a random string that is added to the password before hashing to make it more secure.
     // It helps protect against dictionary attacks and rainbow table attacks.
+    // why 10?
+    // The number 10 represents the cost factor for the hashing algorithm. 
+    // A higher cost factor means more computational work is required to hash the password, making it more secure but also slower to compute.
     
 
     const newUser = {
@@ -102,6 +109,28 @@ app.post('/signup', (req, res) => {
     data.push(newUser);
     res.status(201).json(newUser);
 });
+
+app.post('/login', (req, res) => {
+ const {email, password} = req.body;
+ if(!email || !password) {
+    return res.status(400).json({ message: 'email, and password are required' });
+  }
+  const user = data.find((user) => user.email === email);
+  if(!user) {
+    return res.status(401).json({ message: 'invalid credentials' });
+  }
+  const passwordmatch = bcrypt.compare(password,data.password);
+  
+  if(!passwordmatch) {
+    return res.status(401).json({ message: 'invalid credentials' });
+  }
+  const token = jwt.sign({id : data.id , email:data.email} , JWT_SECRET);
+
+  res.json({
+    message : "Login Successful"
+  })
+
+})
 
 
 app.listen(PORT, () => {
