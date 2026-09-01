@@ -1,10 +1,19 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose';
+import dns from 'dns';
+import cors from "cors";
 
 
 const PORT = 8000;
 const JWT_SECRET = "Arshad"
+dns.setDefaultResultOrder('ipv4first');
+
+dns.setServers([
+  '8.8.8.8',
+  '1.1.1.1'
+]);
 
 const data = [
   { id: 1, name: 'Arshad Qureshi', phone: '123-456-7890', fatherName: 'Qureshi',  
@@ -17,6 +26,28 @@ const data = [
 
 const app = express();
 app.use(express.json());
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
+
+
+async function databaseConnection() {
+  try {
+    await mongoose.connect("mongodb+srv://qureshiarshad47878_db_user:CoEO1mVMZ9dLASF3@cluster0.jfkut42.mongodb.net/");
+
+    console.log('MongoDB connected');
+  } catch (error) {
+    console.error(
+      'MongoDB connection error:',
+      error.message
+    );
+  }
+}
+
+databaseConnection();
 
 app.get('/', (req, res) => {
   res.send(data);
@@ -117,14 +148,22 @@ app.post('/login', (req, res) => {
   }
   const user = data.find((user) => user.email === email);
   if(!user) {
-    return res.status(401).json({ message: 'invalid credentials' });
+    return res.status(401).json({ message: 'invalid credentialsghj' });
   }
-  const passwordmatch = bcrypt.compare(password,data.password);
+  const passwordmatch = bcrypt.compare(password,user.password);
   
   if(!passwordmatch) {
-    return res.status(401).json({ message: 'invalid credentials' });
+    return res.status(401).json({ message: 'invalid credentialsfgh' });
   }
-  const token = jwt.sign({id : data.id , email:data.email} , JWT_SECRET);
+  const token = jwt.sign({id : user.id , email:user.email} , JWT_SECRET);
+  
+  res.cookie("token", token,{
+    httpOnly : true,
+    secure : false,
+    sameSite : "lax",
+    maxAge : 7*24*60*60*1000,
+  });
+  // res.send("hhy")
 
   res.json({
     message : "Login Successful"
