@@ -24,6 +24,17 @@ const data = [
      localAddress: '456 Oak Ave, Town, Country', permanentAddress: '789 Maple Dr, City, Country', email: 'praveen@example.com' },
 ];
 
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: {
+    type: String,
+    unique: true
+  },
+  password: String
+});
+
+const userModel = mongoose.model("UserData", userSchema);
+
 const app = express();
 app.use(express.json());
 
@@ -108,68 +119,132 @@ app.delete('/api/v1/students/:id', (req, res) => {
   });
 });
 
-app.post('/signup', (req, res) => {
+// app.post('/signup', async(req, res) => {
+//   const { name, email, password } = req.body;
+
+//     const existingUser = userModel.findOne({email});
+    
+//     if (existingUser) {
+//       return res.status(400).json({ message: 'User already exists' });
+//     }
+//     if(!name || !email || !password) {
+//       return res.status(400).json({ message: 'Name, email, and password are required' });
+//     }
+
+//     const hashedPassword = bcrypt.hashSync(password, 10); 
+
+//     // what is salt (10)? 
+//     // Salt is a random string that is added to the password before hashing to make it more secure.
+//     // It helps protect against dictionary attacks and rainbow table attacks.
+//     // why 10?
+//     // The number 10 represents the cost factor for the hashing algorithm. 
+//     // A higher cost factor means more computational work is required to hash the password, making it more secure but also slower to compute.
+    
+
+//     const newUser = {
+//       id: data.length + 1,
+//       name,
+//       email,
+//       password: hashedPassword
+//     };
+
+//     // data.push(newUser);
+
+//     const user = await userModel.create({
+//       name,
+//       email,
+//       password
+//     })
+
+//     res.status(201).json(newUser);
+// });
+
+
+app.post('/signup', async (req, res) => {
   const { name, email, password } = req.body;
 
-    const existingUser = data.find((user) => user.email === email);
-    
-    if(!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      message: 'Name, email, and password are required'
+    });
+  }
+
+  const existingUser = await userModel.findOne({ email });
+
+  if (existingUser) {
+    return res.status(400).json({
+      message: 'User already exists'
+    });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const user = await userModel.create({
+    name,
+    email,
+    password: hashedPassword
+  });
+
+  res.status(201).json({
+    message: 'User registered successfully',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email
     }
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 10); 
-
-    // what is salt (10)? 
-    // Salt is a random string that is added to the password before hashing to make it more secure.
-    // It helps protect against dictionary attacks and rainbow table attacks.
-    // why 10?
-    // The number 10 represents the cost factor for the hashing algorithm. 
-    // A higher cost factor means more computational work is required to hash the password, making it more secure but also slower to compute.
-    
-
-    const newUser = {
-      id: data.length + 1,
-      name,
-      email,
-      password: hashedPassword
-    };
-
-    data.push(newUser);
-    res.status(201).json(newUser);
+  });
 });
 
-app.post('/login', (req, res) => {
- const {email, password} = req.body;
- if(!email || !password) {
-    return res.status(400).json({ message: 'email, and password are required' });
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: 'Email and password are required'
+    });
   }
-  const user = data.find((user) => user.email === email);
-  if(!user) {
-    return res.status(401).json({ message: 'invalid credentialsghj' });
+
+  const user = await userModel.findOne({ email });
+
+  if (!user) {
+    return res.status(401).json({
+      message: 'Invalid credentials'
+    });
   }
-  const passwordmatch = bcrypt.compare(password,user.password);
-  
-  if(!passwordmatch) {
-    return res.status(401).json({ message: 'invalid credentialsfgh' });
+
+  const passwordMatch = await bcrypt.compare(
+    password,
+    user.password
+  );
+
+  if (!passwordMatch) {
+    return res.status(401).json({
+      message: 'Invalid credentials'
+    });
   }
-  const token = jwt.sign({id : user.id , email:user.email} , JWT_SECRET);
-  
-  res.cookie("token", token,{
-    httpOnly : true,
-    secure : false,
-    sameSite : "lax",
-    maxAge : 7*24*60*60*1000,
+
+  const token = jwt.sign(
+    {
+      id: user._id,
+      email: user.email
+    },
+    JWT_SECRET,
+    {
+      expiresIn: '7d'
+    }
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000
   });
-  // res.send("hhy")
 
   res.json({
-    message : "Login Successful"
-  })
-
-})
+    message: "Login successful"
+  });
+});
 
 
 app.listen(PORT, () => {
