@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import userModel from '../model/registration.js';
 
-const JWT_SECRET = "Arshad"
+const JWT_SECRET = process.env.JWT_SECRET
 
  export async function register(req, res)  {
 
@@ -81,12 +81,84 @@ export async function login (req, res) {
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 
   res.json({
     message: "Login successful"
   });
+
 };
+
+
+export async function getData(req, res) {
+  try {
+    const students = await userModel.find();
+
+    res.status(200).json({
+      message: "Students fetched successfully",
+      data: students
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message
+    });
+  }
+}
+
+
+
+export async function updateData(req, res) {
+  try {
+    const id = req.params.id;
+
+    const student = await userModel.findById(id);
+
+    if (!student) {
+      return res.status(404).json({
+        message: 'Student not found'
+      });
+    }
+
+    student.name = req.body.name;
+    student.email = req.body.email;
+    student.password = req.body.password;
+
+    await student.save();
+
+    res.status(200).json(student);
+
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+}
+
+export async function deleteData(req, res) {
+  try {
+    const student = await userModel.findByIdAndDelete(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        message: 'Student not found'
+      });
+    }
+
+    res.status(200).json({
+      message: 'Student deleted successfully',
+      student
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: 'Something went wrong',
+      error: error.message
+    });
+  }
+}
