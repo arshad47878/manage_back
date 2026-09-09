@@ -2,7 +2,8 @@ import express from 'express';
 import router from './route/userAuthRoutes.js';
 import dns from 'dns';
 import cors from "cors";
-import databaseConnection from "./config/databaseConnection.js"
+import databaseConnection from "./config/databaseConnection.js";
+import productRouter from './route/productRoutes.js';
 
 
 const PORT = 8000;
@@ -25,6 +26,7 @@ app.use(cors({
 await databaseConnection()
 app.use("/api",router)
 
+app.use("/api",productRouter)
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
