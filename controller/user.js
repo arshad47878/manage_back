@@ -95,7 +95,7 @@ export async function login (req, res) {
 
 export async function getData(req, res) {
   try {
-    const students = await userModel.find();
+    const students = await userModel.find().select("-password");
 
     res.status(200).json({
       message: "Students fetched successfully",
