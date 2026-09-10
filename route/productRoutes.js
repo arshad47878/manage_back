@@ -1,8 +1,9 @@
 import express from "express";
 import { Addproduct } from "../controller/productController.js";
+import upload from "../middleware/upload.js";
 
-const productRouter = express.Router();
+const router = express.Router();
 
-productRouter.post("/addProducts", Addproduct);
+router.post("/add", upload.single("product_image"), Addproduct);
 
-export default productRouter;
+export default router;

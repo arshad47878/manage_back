@@ -2,20 +2,35 @@ import productModel from "../model/products.js";
 
 export async function Addproduct(req, res) {
   try {
+     console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
     const {
       product_name,
       category,
       description,
       actual_price,
-      discounted_price
+      discounted_price,
     } = req.body;
+
+    const existingProduct = await productModel.findOne({
+      product_name: product_name.trim()
+    });
+
+    if (existingProduct) {
+      return res.status(409).json({
+        success: false,
+        message: "Product name already exists"
+      });
+    }
 
     const product = await productModel.create({
       product_name,
       category,
       description,
       actual_price,
-      discounted_price
+      discounted_price,
+      product_image: req.file?.filename
+
     });
 
     res.status(201).json({
@@ -25,6 +40,14 @@ export async function Addproduct(req, res) {
     });
 
   } catch (error) {
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Product name already exists"
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Failed to add product",
