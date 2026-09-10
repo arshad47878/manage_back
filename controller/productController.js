@@ -1,5 +1,13 @@
 import productModel from "../model/products.js";
 
+function createSlug(name) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function Addproduct(req, res) {
   try {
      console.log("BODY:", req.body);
@@ -23,8 +31,11 @@ export async function Addproduct(req, res) {
       });
     }
 
+     const slug = createSlug(product_name);
+
     const product = await productModel.create({
       product_name,
+      slug,
       category,
       description,
       actual_price,
