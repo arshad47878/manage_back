@@ -9,7 +9,7 @@ function createSlug(name) {
 }
 
 export async function Addproduct(req, res) {
-  try {
+  try {    
      console.log("BODY:", req.body);
     console.log("FILE:", req.file);
     const {
@@ -40,7 +40,7 @@ export async function Addproduct(req, res) {
       description,
       actual_price,
       discounted_price,
-      product_image: req.file?.filename
+      product_image: req.file?.path
 
     });
 
