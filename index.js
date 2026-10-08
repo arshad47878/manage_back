@@ -5,6 +5,8 @@ import dns from 'dns';
 import cors from "cors";
 import databaseConnection from "./config/databaseConnection.js";
 import productRouter from './route/productRoutes.js';
+import categoryRouter from './route/categoryRoutes.js'
+import subcategoryRouter from './route/subcategoryRoutes.js'
 
 dotenv.config();
 const PORT = 8000;
@@ -28,16 +30,18 @@ await databaseConnection()
 app.use("/api",router)
 
 app.use("/api/product",productRouter)
+app.use("/api/categories", categoryRouter)
+app.use("/api/subcategories", subcategoryRouter)
 
-// // Express Custom Error Handler
-// app.use((err, req, res, next) => {
-//   console.error("GLOBAL ERROR HANDLER:", err);
-//   res.status(err.status || 500).json({
-//     success: false,
-//     message: err.message || "Internal Server Error",
-//     error: typeof err === "object" ? err : String(err)
-//   });
-// });
+// Express Custom Error Handler
+app.use((err, req, res, next) => {
+  console.error("GLOBAL ERROR HANDLER:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+    error: typeof err === "object" ? err : String(err)
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
